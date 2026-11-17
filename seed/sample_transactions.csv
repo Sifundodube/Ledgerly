@@ -1,0 +1,4 @@
+date,description,amount
+2026-11-13,Woolworths Food,-245.75
+11/14/2026,Monthly Salary,42000.00
+not-a-date,Malformed example row,19.00

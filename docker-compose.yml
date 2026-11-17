@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ledgerly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledgerly}
+      POSTGRES_DB: ${POSTGRES_DB:-ledgerly}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ledgerly}:${POSTGRES_PASSWORD:-ledgerly}@postgres:5432/${POSTGRES_DB:-ledgerly}
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-local-refresh-secret-change-me}
+      ML_SERVICE_URL: http://ml:8000
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      EXPO_DEV_ORIGINS: ${EXPO_DEV_ORIGINS:-http://localhost:8081,http://127.0.0.1:8081}
+      DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@ledgerly.local}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-LedgerlyDemo123!}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml:
+    build: ./ml
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ledgerly}:${POSTGRES_PASSWORD:-ledgerly}@postgres:5432/${POSTGRES_DB:-ledgerly}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

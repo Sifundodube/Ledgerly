@@ -1,0 +1,17 @@
+{
+  "name": "ledgerly",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "mobile": "npm --prefix mobile run start",
+    "mobile:typecheck": "npm --prefix mobile run typecheck"
+  },
+  "dependencies": {
+    "@supabase/server": "^1.9.2"
+  }
+}
